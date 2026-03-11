@@ -15,17 +15,20 @@ except:
 from mt5_trade import send_order
 
 # ================= CONNECT MT5 =================
+# ================= CONNECT MT5 =================
 def connect_mt5():
 
-    # Check if MT5 is available (Cloud will not have it)
+    # If MT5 library not available (Cloud)
     if mt5 is None:
-        return False, "MT5 not available in cloud environment"
+        return False, "MT5 not available (cloud environment)"
 
     if mt5.initialize():
+
         account_info = mt5.account_info()
 
         if account_info is not None:
             return True, f"Connected to MT5 | Account: {account_info.login}"
+
         else:
             return False, "Connected but failed to get account info"
 

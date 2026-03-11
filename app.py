@@ -9,6 +9,20 @@ from mt5_helper import connect_mt5, open_trade, close_all
 
 st.warning("⚠️ MT5 trading only works when running locally.")
 
+# ================= SIGNAL ENGINE =================
+def generate_signal():
+
+    handler = TA_Handler(
+        symbol="BTCUSDT",
+        exchange="BINANCE",
+        screener="crypto",
+        interval=Interval.INTERVAL_5_MINUTES
+    )
+
+    analysis = handler.get_analysis()
+
+    return analysis.summary["RECOMMENDATION"]
+
 # ================= PAGE =================
 st.set_page_config(page_title="AI Trading Terminal", layout="wide")
 
@@ -55,6 +69,7 @@ colA, colB = st.columns(2)
 with colA:
     if st.button("Connect MT5"):
         status, msg = connect_mt5()
+        st.write(msg)
         if status:
             st.session_state.mt5_connected = True
             st.success(msg)
@@ -66,6 +81,13 @@ with colB:
         st.success("Status: Connected")
     else:
         st.warning("Status: Not Connected")
+
+# ================= GENERATE SIGNAL =================
+signal = generate_signal()
+
+st.subheader("Trading Signal")
+
+st.success(signal)
 
 # ================= RISK =================
 st.subheader("⚙ Risk Management Settings")
@@ -268,26 +290,39 @@ with tab1:
 
     if st.session_state.position is None:
         if final in ["BUY","SELL"]:
+            
             if st.button("Take Trade"):
+                entry_price = price
 
-                entry_price=price
+            if final == "BUY":
+                sl_price = round(entry_price*(1-stop_loss_percent/100),2)
+                tp_price = round(entry_price*(1+take_profit_percent/100),2)
+            else:
+                sl_price = round(entry_price*(1+stop_loss_percent/100),2)
+                tp_price = round(entry_price*(1-take_profit_percent/100),2)
 
-                if final=="BUY":
-                    sl_price=round(entry_price*(1-stop_loss_percent/100),2)
-                    tp_price=round(entry_price*(1+take_profit_percent/100),2)
-                else:
-                    sl_price=round(entry_price*(1+stop_loss_percent/100),2)
-                    tp_price=round(entry_price*(1-take_profit_percent/100),2)
+            # ===== MT5 TRADE IF CONNECTED =====
+            if st.session_state.mt5_connected and asset == "Gold":
 
-                st.session_state.position={
-                    "type":final,
-                    "entry":entry_price,
-                    "sl":sl_price,
-                    "tp":tp_price,
-                    "time":pd.Timestamp.now()
-                }
+                try:
+                    open_trade("XAUUSD", final, stop_loss_percent, take_profit_percent)
+                    st.success("MT5 Trade Executed")
 
-                st.success("Trade Opened")
+                except Exception as e:
+                    st.error(f"MT5 Trade Failed: {e}")
+
+            else:
+                st.info("Simulation Mode (MT5 not connected)")
+
+            st.session_state.position = {
+                "type": final,
+                "entry": entry_price,
+                "sl": sl_price,
+                "tp": tp_price,
+                "time": pd.Timestamp.now()
+            }
+
+            st.success("Trade Opened")
 
     else:
         pos=st.session_state.position
