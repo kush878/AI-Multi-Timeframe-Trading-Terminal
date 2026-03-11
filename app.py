@@ -312,21 +312,21 @@ with tab1:
 
     st.subheader("💼 Trade Panel")
 
-    if st.session_state.position is None:
+# ================= OPEN TRADE =================
+if st.session_state.position is None:
 
-    if final in ["BUY","SELL"]:
+    if final in ["BUY", "SELL"]:
 
         if st.button("Take Trade"):
 
-            entry_price = price   # define entry price first
+            entry_price = price
 
             if final == "BUY":
-                sl_price = round(entry_price*(1-stop_loss_percent/100),2)
-                tp_price = round(entry_price*(1+take_profit_percent/100),2)
-
+                sl_price = round(entry_price * (1 - stop_loss_percent / 100), 2)
+                tp_price = round(entry_price * (1 + take_profit_percent / 100), 2)
             else:
-                sl_price = round(entry_price*(1+stop_loss_percent/100),2)
-                tp_price = round(entry_price*(1-take_profit_percent/100),2)
+                sl_price = round(entry_price * (1 + stop_loss_percent / 100), 2)
+                tp_price = round(entry_price * (1 - take_profit_percent / 100), 2)
 
             st.session_state.position = {
                 "type": final,
@@ -338,68 +338,63 @@ with tab1:
 
             st.success("Trade Opened")
 
-            # ===== MT5 TRADE IF CONNECTED =====
             if st.session_state.mt5_connected and asset == "Gold":
-
                 try:
                     open_trade("XAUUSD", final, stop_loss_percent, take_profit_percent)
                     st.success("MT5 Trade Executed")
-
                 except Exception as e:
                     st.error(f"MT5 Trade Failed: {e}")
-
             else:
                 st.info("Simulation Mode (MT5 not connected)")
 
-            st.session_state.position = {
-                "type": final,
-                "entry": entry_price,
-                "sl": sl_price,
-                "tp": tp_price,
-                "time": pd.Timestamp.now()
-            }
+# ================= MANAGE OPEN TRADE =================
+else:
 
-            st.success("Trade Opened")
+    pos = st.session_state.position
 
-    else:
-        pos=st.session_state.position
-        pnl=price-pos["entry"] if pos["type"]=="BUY" else pos["entry"]-price
+    pnl = price - pos["entry"] if pos["type"] == "BUY" else pos["entry"] - price
 
-        risk_limit = round(st.session_state.balance*(stop_loss_percent/100),2)
-        reward_target = round(st.session_state.balance*(take_profit_percent/100),2)
+    risk_limit = round(st.session_state.balance * (stop_loss_percent / 100), 2)
+    reward_target = round(st.session_state.balance * (take_profit_percent / 100), 2)
 
-        st.write(f"Current PnL: {round(pnl,2)}")
-        st.write(f"Stop Loss Limit ({stop_loss_percent}%): -{risk_limit}")
-        st.write(f"Take Profit Target ({take_profit_percent}%): {reward_target}")
+    st.write(f"Current PnL: {round(pnl,2)}")
+    st.write(f"Stop Loss Limit ({stop_loss_percent}%): -{risk_limit}")
+    st.write(f"Take Profit Target ({take_profit_percent}%): {reward_target}")
 
-        if (pos["type"]=="BUY" and (price<=pos["sl"] or price>=pos["tp"])) or \
-           (pos["type"]=="SELL" and (price>=pos["sl"] or price<=pos["tp"])):
+    if (pos["type"] == "BUY" and (price <= pos["sl"] or price >= pos["tp"])) or \
+       (pos["type"] == "SELL" and (price >= pos["sl"] or price <= pos["tp"])):
 
-            st.session_state.balance+=pnl
-            st.session_state.trades.append([
-                pos["time"],asset,pos["type"],
-                round(pos["entry"],2),pos["sl"],pos["tp"],
-                round(price,2),round(pnl,2),
-                round(st.session_state.balance,2)
-            ])
-            st.session_state.position=None
-            if pnl > 0:
-                st.success("Take Profit Hit 🚀")
-            else:
-                st.error("Stop Loss Hit ❌")
+        st.session_state.balance += pnl
 
-        if st.button("Close Trade"):
-            st.session_state.balance+=pnl
-            st.session_state.trades.append([
-                pos["time"],asset,pos["type"],
-                round(pos["entry"],2),pos["sl"],pos["tp"],
-                round(price,2),round(pnl,2),
-                round(st.session_state.balance,2)
-            ])
-            st.session_state.position=None
-            st.success("Trade Closed Manually")
+        st.session_state.trades.append([
+            pos["time"], asset, pos["type"],
+            round(pos["entry"],2), pos["sl"], pos["tp"],
+            round(price,2), round(pnl,2),
+            round(st.session_state.balance,2)
+        ])
 
-    st.metric("Account Balance",round(st.session_state.balance,2))
+        st.session_state.position = None
+
+        if pnl > 0:
+            st.success("Take Profit Hit 🚀")
+        else:
+            st.error("Stop Loss Hit ❌")
+
+    if st.button("Close Trade"):
+
+        st.session_state.balance += pnl
+
+        st.session_state.trades.append([
+            pos["time"], asset, pos["type"],
+            round(pos["entry"],2), pos["sl"], pos["tp"],
+            round(price,2), round(pnl,2),
+            round(st.session_state.balance,2)
+        ])
+
+        st.session_state.position = None
+        st.success("Trade Closed Manually")
+
+st.metric("Account Balance", round(st.session_state.balance,2))
 
     st.subheader("Recent Trades")
     show_trade_table(5)
