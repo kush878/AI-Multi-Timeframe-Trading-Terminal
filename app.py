@@ -121,6 +121,7 @@ with colA:
     if st.button("Connect MT5"):
         status, msg = connect_mt5()
         st.write(msg)
+
         if status:
             st.session_state.mt5_connected = True
             st.success(msg)
@@ -132,6 +133,10 @@ with colB:
         st.success("Status: Connected")
     else:
         st.warning("Status: Not Connected")
+
+# Show warning only if MT5 not connected
+if not st.session_state.mt5_connected:
+    st.warning("⚠️ MT5 trading only works when running locally or when MT5 is connected.")
 
 # ================= GENERATE SIGNAL =================
 signal = generate_signal()
