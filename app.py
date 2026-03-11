@@ -9,6 +9,35 @@ from mt5_helper import connect_mt5, open_trade, close_all
 
 st.warning("⚠️ MT5 trading only works when running locally.")
 
+# ================= PRICE DATA =================
+def get_data():
+    try:
+        url=f"https://query1.finance.yahoo.com/v8/finance/chart/{chart_symbol}?range=1d&interval=5m"
+        data=requests.get(url,headers={"User-Agent":"Mozilla/5.0"}).json()
+        if not data["chart"]["result"]:
+            return pd.DataFrame()
+        r=data["chart"]["result"][0]
+
+        df=pd.DataFrame({
+            "Time":pd.to_datetime(r["timestamp"],unit="s"),
+            "Close":r["indicators"]["quote"][0]["close"]
+        }).dropna()
+
+        delta=df["Close"].diff()
+        gain=delta.clip(lower=0)
+        loss=-delta.clip(upper=0)
+        rs=gain.rolling(14).mean()/loss.rolling(14).mean()
+        df["RSI"]=100-(100/(1+rs))
+
+        ema12=df["Close"].ewm(span=12,adjust=False).mean()
+        ema26=df["Close"].ewm(span=26,adjust=False).mean()
+        df["MACD"]=ema12-ema26
+        df["Signal"]=df["MACD"].ewm(span=9,adjust=False).mean()
+
+        return df
+    except:
+        return pd.DataFrame()
+
 # ================= SIGNAL ENGINE =================
 def generate_signal():
 
@@ -198,34 +227,7 @@ def analyze(interval):
     except:
         return "WAIT"
 
-# ================= PRICE DATA =================
-def get_data():
-    try:
-        url=f"https://query1.finance.yahoo.com/v8/finance/chart/{chart_symbol}?range=1d&interval=5m"
-        data=requests.get(url,headers={"User-Agent":"Mozilla/5.0"}).json()
-        if not data["chart"]["result"]:
-            return pd.DataFrame()
-        r=data["chart"]["result"][0]
 
-        df=pd.DataFrame({
-            "Time":pd.to_datetime(r["timestamp"],unit="s"),
-            "Close":r["indicators"]["quote"][0]["close"]
-        }).dropna()
-
-        delta=df["Close"].diff()
-        gain=delta.clip(lower=0)
-        loss=-delta.clip(upper=0)
-        rs=gain.rolling(14).mean()/loss.rolling(14).mean()
-        df["RSI"]=100-(100/(1+rs))
-
-        ema12=df["Close"].ewm(span=12,adjust=False).mean()
-        ema26=df["Close"].ewm(span=26,adjust=False).mean()
-        df["MACD"]=ema12-ema26
-        df["Signal"]=df["MACD"].ewm(span=9,adjust=False).mean()
-
-        return df
-    except:
-        return pd.DataFrame()
 
 # ================= TRADE TABLE =================
 def show_trade_table(limit):
