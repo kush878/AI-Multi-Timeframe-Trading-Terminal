@@ -12,16 +12,24 @@ st.warning("⚠️ MT5 trading only works when running locally.")
 # ================= SIGNAL ENGINE =================
 def generate_signal():
 
-    handler = TA_Handler(
-        symbol="BTCUSDT",
-        exchange="BINANCE",
-        screener="crypto",
-        interval=Interval.INTERVAL_5_MINUTES
-    )
+    try:
 
-    analysis = handler.get_analysis()
+        handler = TA_Handler(
+            symbol="BTCUSDT",
+            exchange="BINANCE",
+            screener="crypto",
+            interval=Interval.INTERVAL_5_MINUTES
+        )
 
-    return analysis.summary["RECOMMENDATION"]
+        analysis = handler.get_analysis()
+
+        return analysis.summary["RECOMMENDATION"]
+
+    except Exception as e:
+
+        print("TradingView error:", e)
+
+        return "WAIT"
 
 # ================= PAGE =================
 st.set_page_config(page_title="AI Trading Terminal", layout="wide")
