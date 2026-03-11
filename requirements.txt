@@ -1,0 +1,5 @@
+streamlit
+tradingview-ta
+pandas
+plotly
+requests
