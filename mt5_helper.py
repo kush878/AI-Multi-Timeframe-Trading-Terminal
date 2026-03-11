@@ -7,8 +7,11 @@
 #Login,Send orders , Close orders Without this file → Streamlit cannot trade.
 # Only this file needs modification → whole project survives.
 
+try:
+    import MetaTrader5 as mt5
+except:
+    mt5 = None
 
-import MetaTrader5 as mt5
 from mt5_trade import send_order
 
 # ================= CONNECT MT5 =================
