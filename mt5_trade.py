@@ -6,9 +6,16 @@
 # This file is a more flexible executor.
 
 
-import MetaTrader5 as mt5
-
+try:
+    import MetaTrader5 as mt5
+except:
+    mt5 = None
+    
 def send_order(symbol, order_type, lot, sl_price=None, tp_price=None):
+    
+    if mt5 is None:
+        print("MT5 not available in cloud environment")
+        return
 
     if not mt5.symbol_select(symbol, True):
         return False, "Symbol not available"
