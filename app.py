@@ -396,8 +396,8 @@ else:
 
 st.metric("Account Balance", round(st.session_state.balance,2))
 
-    st.subheader("Recent Trades")
-    show_trade_table(5)
+st.subheader("Recent Trades")
+show_trade_table(5)
 
 # ================= CHART TAB =================
 with tab2:
