@@ -324,6 +324,16 @@ with tab1:
             else:
                 sl_price = round(entry_price*(1+stop_loss_percent/100),2)
                 tp_price = round(entry_price*(1-take_profit_percent/100),2)
+                
+                st.session_state.position = {
+                    "type": final,
+                    "entry": entry_price,
+                    "sl": sl_price,
+                    "tp": tp_price,
+                    "time": pd.Timestamp.now()
+                    }
+
+            st.success("Trade Opened")
 
             # ===== MT5 TRADE IF CONNECTED =====
             if st.session_state.mt5_connected and asset == "Gold":
