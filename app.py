@@ -13,7 +13,6 @@ st.warning("⚠️ MT5 trading only works when running locally.")
 def generate_signal():
 
     try:
-
         handler = TA_Handler(
             symbol="BTCUSDT",
             exchange="BINANCE",
@@ -25,11 +24,26 @@ def generate_signal():
 
         return analysis.summary["RECOMMENDATION"]
 
-    except Exception as e:
+    except:
 
-        print("TradingView error:", e)
+        # ===== FALLBACK STRATEGY (EMA + RSI) =====
+        df = get_data()
 
-        return "WAIT"
+        if df.empty:
+            return "WAIT"
+
+        ema10 = df["Close"].ewm(span=10).mean().iloc[-1]
+        ema20 = df["Close"].ewm(span=20).mean().iloc[-1]
+        rsi = df["RSI"].iloc[-1]
+
+        if ema10 > ema20 and rsi > 50:
+            return "BUY"
+
+        elif ema10 < ema20 and rsi < 50:
+            return "SELL"
+
+        else:
+            return "WAIT"
 
 # ================= PAGE =================
 st.set_page_config(page_title="AI Trading Terminal", layout="wide")
