@@ -7,7 +7,6 @@ import plotly.graph_objects as go
 
 from mt5_helper import connect_mt5, open_trade, close_all
 
-st.warning("⚠️ MT5 trading only works when running locally.")
 
 # ================= PRICE DATA =================
 def get_data():
