@@ -207,30 +207,36 @@ def signal_box(label,value):
 # ================= ANALYZE =================
 @st.cache_data(ttl=10)
 def analyze(interval):
-    try:
-        handler = TA_Handler(
-            symbol=symbol,
-            exchange=exchange,
-            screener=screener,
-            interval=interval
-        )
 
-        r = handler.get_analysis()
+    df = get_data()
 
-        ema10 = r.indicators["EMA10"]
-        ema20 = r.indicators["EMA20"]
-        rsi = r.indicators["RSI"]
-
-        if ema10 > ema20 and rsi > 50:
-            return "BUY"
-        elif ema10 < ema20 and rsi < 50:
-            return "SELL"
-        else:
-            return "WAIT"
-
-    except:
+    if df.empty:
         return "WAIT"
 
+    ema10 = df["Close"].ewm(span=10).mean().iloc[-1]
+    ema20 = df["Close"].ewm(span=20).mean().iloc[-1]
+    rsi = df["RSI"].iloc[-1]
+
+    score = 0
+
+    if ema10 > ema20:
+        score += 1
+    else:
+        score -= 1
+
+    if rsi > 50:
+        score += 1
+    else:
+        score -= 1
+
+    if score >= 1:
+        return "BUY"
+
+    elif score <= -1:
+        return "SELL"
+
+    else:
+        return "WAIT"
 
 
 # ================= TRADE TABLE =================
